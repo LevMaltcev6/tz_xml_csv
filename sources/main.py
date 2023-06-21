@@ -53,7 +53,7 @@ class XMLFileProcessor:
             for file in zf.namelist():
                 xml_content = zf.read(file).decode("utf-8")
                 id_level, object_names = self.extract_data_from_xml(xml_content)
-                self.write_data_to_csv(Config.id_object_csv_name, id_level)
+                self.write_data_to_csv(Config.id_level_csv_name, id_level)
                 for object_name in object_names:
                     self.write_data_to_csv(Config.id_object_csv_name, {"id": id_level["id"], "object_name": object_name})
 
