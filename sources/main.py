@@ -1,9 +1,11 @@
+import csv
+import multiprocessing as mp
 import os
 import random
 import string
-import zipfile
 import xml.etree.ElementTree as ET
-import csv
+import zipfile
+from concurrent.futures import ProcessPoolExecutor
 from typing import Tuple, List, Dict, ClassVar
 
 
@@ -35,6 +37,10 @@ class XMLFileGenerator:
                 xml_file = self.create_xml_structure()
                 zf.writestr(f"file_{i}.xml", ET.tostring(xml_file, encoding="unicode"))
 
+    def generate_multiple_zip_archives(self, number_of_archives: int) -> None:
+        with ProcessPoolExecutor(max_workers=mp.cpu_count()) as executor:
+            executor.map(self.generate_zip_archive_with_xml_files, range(number_of_archives))
+
 
 class XMLFileProcessor:
     def __init__(self, directory_with_zip_archives: str):
@@ -64,15 +70,15 @@ class XMLFileProcessor:
             writer.writerow(data)
 
     def process_all_zip_archives_in_directory(self) -> None:
-        for filename in os.listdir(self.directory):
-            if filename.endswith(".zip"):
-                self.process_single_zip_archive(filename)
+        with ProcessPoolExecutor() as executor:
+            for filename in os.listdir(self.directory):
+                if filename.endswith(".zip"):
+                    executor.submit(self.process_single_zip_archive, filename)
 
 
 def main():
     xml_generator = XMLFileGenerator("./archives")
-    for i in range(50):
-        xml_generator.generate_zip_archive_with_xml_files(i)
+    xml_generator.generate_multiple_zip_archives(50)
 
     xml_processor = XMLFileProcessor("./archives")
     xml_processor.process_all_zip_archives_in_directory()
